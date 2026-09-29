@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problema das 8 Rainhas</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --surface: #101d31;
+      --text: #f4f7fb;
+      --muted: #aab7ca;
+      --cyan: #38d6c9;
+      --gold: #ffca62;
+      --red: #ff6b7a;
+      --blue-square: #38506e;
+      --cream-square: #dce7ee;
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 82% 12%, rgba(56, 214, 201, 0.13), transparent 32%),
+        radial-gradient(circle at 8% 92%, rgba(255, 202, 98, 0.10), transparent 30%),
+        var(--bg);
+    }
+
+    .deck { width: 100%; height: 100%; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: clamp(38px, 5vw, 76px) clamp(48px, 7vw, 112px) 76px;
+      animation: enter 260ms ease-out;
+    }
+
+    .slide.active { display: grid; }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateX(18px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(48px, 6vw, 86px); line-height: 0.98; letter-spacing: -0.05em; }
+    h2 { font-size: clamp(34px, 4.1vw, 58px); line-height: 1.05; letter-spacing: -0.035em; margin-bottom: 28px; }
+    h3 { font-size: clamp(22px, 2vw, 30px); color: var(--cyan); margin-bottom: 10px; }
+    p, li { font-size: clamp(18px, 1.65vw, 27px); line-height: 1.42; }
+    ul { margin: 12px 0 0; padding-left: 1.15em; }
+    li { margin: 10px 0; }
+    strong { color: var(--gold); }
+
+    .eyebrow {
+      color: var(--cyan);
+      font-weight: 700;
+      font-size: clamp(14px, 1.15vw, 18px);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 760px;
+      font-size: clamp(20px, 2vw, 30px);
+    }
+
+    .cover {
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: center;
+      gap: 7vw;
+    }
+
+    .cover .meta {
+      color: var(--muted);
+      margin-top: 38px;
+      font-size: clamp(16px, 1.3vw, 21px);
+    }
+
+    .queen-mark {
+      display: grid;
+      place-items: center;
+      width: min(32vw, 430px);
+      aspect-ratio: 1;
+      border: 2px solid rgba(56, 214, 201, 0.38);
+      border-radius: 50%;
+      font-family: Georgia, serif;
+      font-size: min(22vw, 300px);
+      color: var(--gold);
+      box-shadow: var(--shadow), inset 0 0 90px rgba(56, 214, 201, 0.08);
+    }
+
+    .two-col {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr;
+      column-gap: 6vw;
+      align-items: center;
+    }
+
+    .two-col > h2 { grid-column: 1 / -1; }
+    .content { align-self: center; }
+
+    .big-number {
+      font-size: clamp(70px, 11vw, 170px);
+      color: var(--gold);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+
+    .statement {
+      border-left: 5px solid var(--cyan);
+      padding-left: 28px;
+      max-width: 720px;
+    }
+
+    .board-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .board {
+      width: min(39vw, 470px);
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      border: 8px solid #172942;
+      box-shadow: var(--shadow);
+    }
+
+    .cell {
+      display: grid;
+      place-items: center;
+      color: #101d31;
+      font-family: Georgia, serif;
+      font-size: clamp(24px, 3.3vw, 52px);
+      line-height: 1;
+    }
+
+    .cell.light { background: var(--cream-square); }
+    .cell.dark { background: var(--blue-square); }
+    .cell.conflict { color: var(--red); text-shadow: 0 0 16px rgba(255, 107, 122, 0.5); }
+    .cell.safe { color: #083d3a; }
+
+    .array {
+      display: flex;
+      gap: 8px;
+      margin: 24px 0 30px;
+      flex-wrap: nowrap;
+    }
+
+    .array span {
+      width: clamp(42px, 4.5vw, 68px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(56, 214, 201, 0.5);
+      background: rgba(16, 29, 49, 0.78);
+      font: 700 clamp(19px, 2vw, 30px) ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .indices span {
+      color: var(--muted);
+      border-color: transparent;
+      background: transparent;
+      aspect-ratio: auto;
+      height: 24px;
+      font-size: clamp(12px, 1vw, 16px);
+    }
+
+    .formula {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: clamp(22px, 2.5vw, 38px);
+      color: var(--cyan);
+      padding: 24px 0;
+    }
+
+    .code {
+      width: 100%;
+      background: #050b14;
+      border: 1px solid rgba(170, 183, 202, 0.20);
+      border-left: 5px solid var(--cyan);
+      padding: 26px 30px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font: 500 clamp(15px, 1.3vw, 21px)/1.48 ui-monospace, SFMono-Regular, Consolas, monospace;
+      color: #dbe7f5;
+    }
+
+    .kw { color: #ff79c6; }
+    .fn { color: #62e6da; }
+    .num { color: #ffca62; }
+    .comment { color: #718099; }
+
+    .steps {
+      counter-reset: step;
+      display: grid;
+      gap: 18px;
+      align-content: center;
+    }
+
+    .step {
+      counter-increment: step;
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 20px;
+      align-items: center;
+      font-size: clamp(18px, 1.6vw, 26px);
+    }
+
+    .step::before {
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--cyan);
+      color: #041414;
+      font-weight: 900;
+    }
+
+    .temperature {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 32px;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .thermo {
+      height: 22px;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--red), var(--gold), var(--cyan));
+      box-shadow: 0 0 24px rgba(255, 202, 98, 0.24);
+    }
+
+    .temp-label { font-size: clamp(16px, 1.35vw, 21px); color: var(--muted); }
+
+    .result-line {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      margin: 18px 0;
+    }
+
+    .metric {
+      font-size: clamp(46px, 6vw, 88px);
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: -0.05em;
+    }
+
+    .comparison {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: clamp(17px, 1.45vw, 24px);
+    }
+
+    .comparison th, .comparison td {
+      padding: 18px 16px;
+      border-bottom: 1px solid rgba(170, 183, 202, 0.24);
+      text-align: left;
+    }
+
+    .comparison th { color: var(--cyan); font-weight: 700; }
+    .pending { color: var(--gold); }
+
+    .demo-command {
+      font: 700 clamp(26px, 3vw, 44px) ui-monospace, SFMono-Regular, Consolas, monospace;
+      color: var(--cyan);
+      background: #050b14;
+      border-left: 6px solid var(--gold);
+      padding: 28px 34px;
+      margin: 30px 0;
+    }
+
+    .footer {
+      position: absolute;
+      left: clamp(48px, 7vw, 112px);
+      right: clamp(48px, 7vw, 112px);
+      bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #718099;
+      font-size: 14px;
+    }
+
+    .controls {
+      position: fixed;
+      right: 24px;
+      bottom: 20px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .controls button {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(170, 183, 202, 0.30);
+      background: rgba(8, 17, 31, 0.82);
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      height: 5px;
+      background: var(--cyan);
+      transition: width 220ms ease;
+      z-index: 12;
+    }
+
+    .slide-number {
+      position: fixed;
+      right: 132px;
+      bottom: 29px;
+      color: var(--muted);
+      font-size: 14px;
+      z-index: 10;
+    }
+
+    @media (max-width: 850px) {
+      .cover, .two-col { grid-template-columns: 1fr; }
+      .cover { gap: 20px; }
+      .queen-mark { display: none; }
+      .two-col > h2 { grid-column: 1; }
+      .board { width: min(62vw, 390px); }
+      .slide { overflow-y: auto; padding-bottom: 100px; }
+    }
+
+    @media print {
+      html, body { overflow: visible; background: white; }
+      .slide {
+        position: relative;
+        display: grid !important;
+        width: 13.333in;
+        height: 7.5in;
+        page-break-after: always;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      .controls, .progress, .slide-number { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide cover active">
+      <div>
+        <div class="eyebrow">Inteligência Artificial</div>
+        <h1>Problema das<br>8 Rainhas</h1>
+        <p class="subtitle">Busca local com Simulated Annealing e preparação para comparação com Hill Climbing</p>
+        <p class="meta">Integrantes: ____________________ &nbsp; ____________________</p>
+      </div>
+      <div class="queen-mark" aria-hidden="true">♛</div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>O desafio</h2>
+      <div class="content">
+        <div class="big-number">8</div>
+        <p class="statement">Posicionar oito rainhas sem ataques na mesma linha, coluna ou diagonal.</p>
+        <p>Usamos uma rainha por coluna, então o algoritmo precisa resolver apenas conflitos de linha e diagonal.</p>
+      </div>
+      <div class="board-wrap">
+        <div class="board" data-board="0,1,2,3,4,5,6,7" data-conflicts="all" aria-label="Tabuleiro com rainhas em conflito"></div>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Representação do tabuleiro</h2>
+      <div class="content">
+        <p>Cada posição da lista representa uma <strong>coluna</strong>. O número guardado representa a <strong>linha</strong> da rainha.</p>
+        <div class="array indices">
+          <span>col 0</span><span>col 1</span><span>col 2</span><span>col 3</span><span>col 4</span><span>col 5</span><span>col 6</span><span>col 7</span>
+        </div>
+        <div class="array">
+          <span>3</span><span>6</span><span>0</span><span>7</span><span>4</span><span>1</span><span>5</span><span>2</span>
+        </div>
+        <p><strong>tabuleiro[2] = 0</strong><br>A rainha da coluna 2 está na linha 0.</p>
+      </div>
+      <div class="board-wrap">
+        <div class="board" data-board="3,6,0,7,4,1,5,2" aria-label="Tabuleiro sem conflitos"></div>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Contagem de conflitos</h2>
+      <div class="content">
+        <h3>Mesma linha</h3>
+        <p>Os valores das duas colunas são iguais.</p>
+        <div class="formula">tabuleiro[c1] == tabuleiro[c2]</div>
+
+        <h3>Mesma diagonal</h3>
+        <p>A distância entre linhas é igual à distância entre colunas.</p>
+        <div class="formula">|linha1 - linha2| == |c1 - c2|</div>
+      </div>
+      <div class="code">
+        <pre><span class="kw">for</span> coluna1 <span class="kw">in</span> range(tamanho):
+    <span class="kw">for</span> coluna2 <span class="kw">in</span> range(coluna1 + <span class="num">1</span>, tamanho):
+        mesma_linha = tabuleiro[coluna1] == tabuleiro[coluna2]
+
+        distancia_colunas = abs(coluna1 - coluna2)
+        distancia_linhas = abs(
+            tabuleiro[coluna1] - tabuleiro[coluna2]
+        )
+
+        <span class="kw">if</span> mesma_linha <span class="kw">or</span> distancia_colunas == distancia_linhas:
+            conflito += <span class="num">1</span></pre>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Estado vizinho</h2>
+      <div class="content">
+        <p>Um vizinho nasce quando o algoritmo escolhe uma coluna e move sua rainha para outra linha.</p>
+        <div class="array">
+          <span>2</span><span>5</span><span>1</span><span>7</span><span>3</span><span style="border-color:var(--red);color:var(--red)">0</span><span>6</span><span>4</span>
+        </div>
+        <div class="array">
+          <span>2</span><span>5</span><span>1</span><span>7</span><span>3</span><span style="border-color:var(--cyan);color:var(--cyan)">2</span><span>6</span><span>4</span>
+        </div>
+        <p>A cópia preserva o estado atual caso o algoritmo rejeite o movimento.</p>
+      </div>
+      <div class="code">
+        <pre><span class="kw">def</span> <span class="fn">gerar_vizinho</span>(tabuleiro):
+    vizinho = tabuleiro.copy()
+
+    coluna = random.randrange(len(tabuleiro))
+    linha_atual = vizinho[coluna]
+    nova_linha = random.randrange(len(tabuleiro))
+
+    <span class="kw">while</span> nova_linha == linha_atual:
+        nova_linha = random.randrange(len(tabuleiro))
+
+    vizinho[coluna] = nova_linha
+    <span class="kw">return</span> vizinho</pre>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Simulated Annealing</h2>
+      <div class="steps">
+        <div class="step">Conta os conflitos do estado atual</div>
+        <div class="step">Gera um vizinho movendo uma rainha</div>
+        <div class="step">Aceita melhorias imediatamente</div>
+        <div class="step">Pode aceitar uma piora conforme a temperatura</div>
+        <div class="step">Reduz a temperatura e repete a busca</div>
+      </div>
+      <div class="content">
+        <div class="statement">
+          <h3>Diferença central</h3>
+          <p>Uma piora temporária pode retirar a busca de uma configuração onde nenhuma melhoria imediata aparece.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Temperatura e decisão</h2>
+      <div class="content">
+        <p>O delta mede a mudança nos conflitos.</p>
+        <div class="formula">delta = conflitos_vizinho - conflitos_atual</div>
+        <p><strong>Delta menor ou igual a zero:</strong> aceita.<br><strong>Delta positivo:</strong> calcula uma chance.</p>
+        <div class="formula">P = e<sup>-delta / temperatura</sup></div>
+      </div>
+      <div class="content">
+        <div class="temperature">
+          <span class="temp-label">Explora mais</span>
+          <span class="thermo" style="width:min(32vw,420px)"></span>
+          <span class="temp-label">Fica exigente</span>
+        </div>
+        <div class="code" style="margin-top:34px">
+          <pre><span class="kw">if</span> delta &lt;= <span class="num">0</span>:
+    atual = vizinho
+<span class="kw">else</span>:
+    probabilidade = math.exp(-delta / temperatura)
+    <span class="kw">if</span> random.random() &lt; probabilidade:
+        atual = vizinho
+
+temperatura = temperatura * taxa_resfriamento</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Resultado de uma execução</h2>
+      <div class="content">
+        <p>Exemplo observado durante os testes do programa:</p>
+        <div class="result-line"><span class="metric">8</span><span>conflitos iniciais</span></div>
+        <div class="result-line"><span class="metric">0</span><span>conflitos finais</span></div>
+        <p>O algoritmo chegou a uma solução depois de aceitar pioras durante a busca.</p>
+      </div>
+      <div class="board-wrap">
+        <div>
+          <div class="board" data-board="3,6,0,7,4,1,5,2" aria-label="Solução encontrada"></div>
+          <p style="text-align:center;color:var(--muted);margin-top:18px">[3, 6, 0, 7, 4, 1, 5, 2]</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Comparação dos algoritmos</h2>
+      <div class="content" style="grid-column:1/-1">
+        <table class="comparison">
+          <thead>
+            <tr><th>Aspecto</th><th>Hill Climbing</th><th>Simulated Annealing</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Melhorias</td><td>Aceita</td><td>Aceita</td></tr>
+            <tr><td>Pioras</td><td>Rejeita</td><td>Pode aceitar</td></tr>
+            <tr><td>Controle adicional</td><td>Não usa temperatura</td><td>Temperatura e resfriamento</td></tr>
+            <tr><td>Risco de ficar preso</td><td>Maior</td><td>Menor</td></tr>
+            <tr><td>Validação no projeto</td><td class="pending">Próxima etapa</td><td>Implementado e testado</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Demonstração no terminal</h2>
+      <div class="content">
+        <p>A interface reúne a geração do tabuleiro, a visualização e a execução do algoritmo.</p>
+        <div class="demo-command">python interface.py</div>
+        <ul>
+          <li>Gerar um novo estado inicial</li>
+          <li>Mostrar posições e conflitos</li>
+          <li>Executar rapidamente ou animar a busca</li>
+          <li>Avançar passo a passo durante a apresentação</li>
+        </ul>
+      </div>
+      <div class="code">
+        <pre>=== SIMULADOR DAS 8 RAINHAS ===
+
+1 - Gerar novo tabuleiro
+2 - Mostrar tabuleiro atual
+3 - Executar rapidamente
+4 - Animar automaticamente
+5 - Visualizar passo a passo
+0 - Sair
+
+Escolha uma opcao: <span class="num">4</span></pre>
+      </div>
+    </section>
+
+    <section class="slide cover">
+      <div>
+        <div class="eyebrow">Conclusão</div>
+        <h1>Busca, avaliação<br>e decisão</h1>
+        <p class="subtitle">A representação por lista simplifica o tabuleiro. A função de conflitos mede cada estado. O Simulated Annealing explora soluções sem abandonar a busca diante de uma piora temporária.</p>
+        <p class="meta">Próxima etapa: validar o Hill Climbing e comparar as execuções no mesmo estado inicial.</p>
+      </div>
+      <div class="queen-mark" aria-hidden="true">♛</div>
+    </section>
+  </main>
+
+  <div class="slide-number" aria-live="polite"></div>
+  <div class="controls">
+    <button id="prev" aria-label="Slide anterior">‹</button>
+    <button id="next" aria-label="Próximo slide">›</button>
+  </div>
+  <div class="progress"></div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const progress = document.querySelector('.progress');
+    const number = document.querySelector('.slide-number');
+    let current = 0;
+
+    function showSlide(index) {
+      current = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+      progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+      number.textContent = `${current + 1} / ${slides.length}`;
+      history.replaceState(null, '', `#${current + 1}`);
+    }
+
+    function renderBoards() {
+      document.querySelectorAll('.board').forEach(board => {
+        const queens = board.dataset.board.split(',').map(Number);
+        const markAll = board.dataset.conflicts === 'all';
+
+        for (let row = 0; row < 8; row += 1) {
+          for (let col = 0; col < 8; col += 1) {
+            const cell = document.createElement('div');
+            cell.className = `cell ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
+
+            if (queens[col] === row) {
+              cell.textContent = '♛';
+              cell.classList.add(markAll ? 'conflict' : 'safe');
+            }
+
+            board.appendChild(cell);
+          }
+        }
+      });
+    }
+
+    document.getElementById('prev').addEventListener('click', () => showSlide(current - 1));
+    document.getElementById('next').addEventListener('click', () => showSlide(current + 1));
+
+    document.addEventListener('keydown', event => {
+      if (['ArrowRight', 'PageDown', ' '].includes(event.key)) showSlide(current + 1);
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) showSlide(current - 1);
+      if (event.key === 'Home') showSlide(0);
+      if (event.key === 'End') showSlide(slides.length - 1);
+      if (event.key.toLowerCase() === 'f') document.documentElement.requestFullscreen?.();
+    });
+
+    renderBoards();
+    const initial = Number(location.hash.slice(1)) - 1;
+    showSlide(Number.isInteger(initial) && initial >= 0 ? initial : 0);
+  </script>
+</body>
+</html>
