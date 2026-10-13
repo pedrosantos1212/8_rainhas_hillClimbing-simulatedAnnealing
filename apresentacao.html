@@ -375,8 +375,8 @@
       <div>
         <div class="eyebrow">Inteligência Artificial</div>
         <h1>Problema das<br>8 Rainhas</h1>
-        <p class="subtitle">Busca local com Simulated Annealing e preparação para comparação com Hill Climbing</p>
-        <p class="meta">Integrantes: ____________________ &nbsp; ____________________</p>
+        <p class="subtitle">Do Hill Climbing ao Simulated Annealing e ao Algoritmo Genético no Problema das 8 Rainhas</p>
+        <p class="meta">Pedro dos Santos, João Belladona e Bruno Picon</p>
       </div>
       <div class="queen-mark" aria-hidden="true">♛</div>
     </section>
@@ -465,6 +465,24 @@
     </section>
 
     <section class="slide two-col">
+      <h2>Hill Climbing</h2>
+      <div class="steps">
+        <div class="step">Conta os conflitos do estado atual</div>
+        <div class="step">Gera os 56 movimentos possíveis</div>
+        <div class="step">Escolhe o vizinho com menos conflitos</div>
+        <div class="step">Repete enquanto existir melhora estrita</div>
+      </div>
+      <div class="content">
+        <div class="statement">
+          <h3>Mínimo local</h3>
+          <p>A busca para quando nenhum vizinho reduz os conflitos, mesmo que o tabuleiro ainda não seja uma solução.</p>
+        </div>
+        <div class="result-line"><span class="metric">56</span><span>vizinhos avaliados por estado</span></div>
+        <p>O algoritmo não aceita empates nem pioras.</p>
+      </div>
+    </section>
+
+    <section class="slide two-col">
       <h2>Simulated Annealing</h2>
       <div class="steps">
         <div class="step">Conta os conflitos do estado atual</div>
@@ -509,7 +527,7 @@ temperatura = temperatura * taxa_resfriamento</pre>
     </section>
 
     <section class="slide two-col">
-      <h2>Resultado de uma execução</h2>
+      <h2>Resultado do Simulated Annealing</h2>
       <div class="content">
         <p>Exemplo observado durante os testes do programa:</p>
         <div class="result-line"><span class="metric">8</span><span>conflitos iniciais</span></div>
@@ -525,46 +543,113 @@ temperatura = temperatura * taxa_resfriamento</pre>
     </section>
 
     <section class="slide two-col">
-      <h2>Comparação dos algoritmos</h2>
-      <div class="content" style="grid-column:1/-1">
-        <table class="comparison">
-          <thead>
-            <tr><th>Aspecto</th><th>Hill Climbing</th><th>Simulated Annealing</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Melhorias</td><td>Aceita</td><td>Aceita</td></tr>
-            <tr><td>Pioras</td><td>Rejeita</td><td>Pode aceitar</td></tr>
-            <tr><td>Controle adicional</td><td>Não usa temperatura</td><td>Temperatura e resfriamento</td></tr>
-            <tr><td>Risco de ficar preso</td><td>Maior</td><td>Menor</td></tr>
-            <tr><td>Validação no projeto</td><td class="pending">Próxima etapa</td><td>Implementado e testado</td></tr>
-          </tbody>
-        </table>
+      <h2>Algoritmo Genético</h2>
+      <div class="steps">
+        <div class="step">Cria uma população de tabuleiros</div>
+        <div class="step">Avalia a qualidade de cada indivíduo</div>
+        <div class="step">Seleciona pais e combina suas características</div>
+        <div class="step">Aplica mutações e forma outra geração</div>
+      </div>
+      <div class="content">
+        <div class="statement">
+          <h3>Nível 3: população</h3>
+          <p>Em vez de melhorar um único tabuleiro, o algoritmo evolui várias tentativas ao mesmo tempo.</p>
+        </div>
+        <div class="formula" style="font-size:clamp(18px,2vw,30px)">População → Seleção → Cruzamento → Mutação</div>
       </div>
     </section>
 
     <section class="slide two-col">
-      <h2>Demonstração no terminal</h2>
+      <h2>Indivíduo e fitness</h2>
       <div class="content">
-        <p>A interface reúne a geração do tabuleiro, a visualização e a execução do algoritmo.</p>
-        <div class="demo-command">python interface.py</div>
-        <ul>
-          <li>Gerar um novo estado inicial</li>
-          <li>Mostrar posições e conflitos</li>
-          <li>Executar rapidamente ou animar a busca</li>
-          <li>Avançar passo a passo durante a apresentação</li>
-        </ul>
+        <p>Cada indivíduo é um tabuleiro no mesmo formato de lista usado pelos outros algoritmos.</p>
+        <div class="array">
+          <span>3</span><span>6</span><span>0</span><span>7</span><span>4</span><span>1</span><span>5</span><span>2</span>
+        </div>
+        <p>Entre oito rainhas existem 28 pares. O fitness recompensa os pares que não estão em conflito.</p>
+        <div class="formula">fitness = 28 - conflitos</div>
+        <p><strong>Fitness 28</strong> significa que nenhum par de rainhas se ataca.</p>
       </div>
       <div class="code">
-        <pre>=== SIMULADOR DAS 8 RAINHAS ===
+        <pre><span class="kw">def</span> <span class="fn">calcular_fitness</span>(individuo):
+    total_pares = <span class="num">28</span>
+    conflitos = calcular_conflitos(individuo)
+    <span class="kw">return</span> total_pares - conflitos</pre>
+      </div>
+    </section>
 
-1 - Gerar novo tabuleiro
-2 - Mostrar tabuleiro atual
-3 - Executar rapidamente
-4 - Animar automaticamente
-5 - Visualizar passo a passo
-0 - Sair
+    <section class="slide two-col">
+      <h2>Seleção, cruzamento e mutação</h2>
+      <div class="steps">
+        <div class="step"><span><strong>Seleção:</strong> um torneio favorece tabuleiros com fitness maior</span></div>
+        <div class="step"><span><strong>Cruzamento:</strong> cada filho recebe uma parte de cada pai</span></div>
+        <div class="step"><span><strong>Mutação:</strong> uma rainha pode mudar de linha aleatoriamente</span></div>
+      </div>
+      <div class="code">
+        <pre>ponto = random.randint(<span class="num">1</span>, len(pai1) - <span class="num">1</span>)
 
-Escolha uma opcao: <span class="num">4</span></pre>
+filho1 = pai1[:ponto] + pai2[ponto:]
+filho2 = pai2[:ponto] + pai1[ponto:]
+
+<span class="kw">if</span> random.random() &lt; taxa_mutacao:
+    coluna = random.randrange(len(filho1))
+    filho1[coluna] = random.randrange(<span class="num">8</span>)</pre>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Evolução das gerações</h2>
+      <div class="content">
+        <div class="result-line"><span class="metric">100</span><span>indivíduos na população padrão</span></div>
+        <p>O melhor indivíduo passa diretamente para a geração seguinte. Essa preservação recebe o nome de <strong>elitismo</strong>.</p>
+        <p>A busca termina ao encontrar fitness 28 ou ao atingir o limite de gerações.</p>
+      </div>
+      <div class="code">
+        <pre><span class="kw">for</span> geracao <span class="kw">in</span> range(max_geracoes + <span class="num">1</span>):
+    populacao.sort(key=calcular_fitness, reverse=<span class="kw">True</span>)
+    melhor = populacao[<span class="num">0</span>]
+
+    <span class="kw">if</span> calcular_conflitos(melhor) == <span class="num">0</span>:
+        <span class="kw">return</span> melhor, geracao
+
+    populacao = criar_nova_geracao(populacao)</pre>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Demonstrações no terminal</h2>
+      <div class="content">
+        <p>O simulador principal compara Hill Climbing e Simulated Annealing a partir do mesmo tabuleiro.</p>
+        <div class="demo-command" style="font-size:clamp(20px,2.3vw,34px)">python interface.py</div>
+        <p>O novo simulador mostra a evolução das gerações do Algoritmo Genético.</p>
+        <div class="demo-command" style="font-size:clamp(20px,2.3vw,34px)">python interface_algoritmo_genetico.py</div>
+      </div>
+      <div class="content">
+        <div class="statement">
+          <h3>Três formas de acompanhar</h3>
+          <p><strong>Rápida:</strong> mostra apenas o resultado.<br><strong>Automática:</strong> anima a busca.<br><strong>Passo a passo:</strong> avança quando o usuário confirma.</p>
+        </div>
+        <p>Os tabuleiros, conflitos e decisões aparecem diretamente no terminal.</p>
+      </div>
+    </section>
+
+    <section class="slide two-col">
+      <h2>Comparação dos algoritmos</h2>
+      <div class="content" style="grid-column:1/-1">
+        <table class="comparison" style="font-size:clamp(15px,1.18vw,20px)">
+          <thead>
+            <tr><th>Aspecto</th><th>Hill Climbing</th><th>Simulated Annealing</th><th>Algoritmo Genético</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Unidade de busca</td><td>Um tabuleiro</td><td>Um tabuleiro</td><td>Uma população</td></tr>
+            <tr><td>Próximo passo</td><td>Melhor vizinho</td><td>Vizinho aleatório</td><td>Nova geração</td></tr>
+            <tr><td>Piora temporária</td><td>Rejeita</td><td>Pode aceitar</td><td>Surge pela diversidade</td></tr>
+            <tr><td>Controle principal</td><td>Melhoria estrita</td><td>Temperatura</td><td>Fitness e mutação</td></tr>
+            <tr><td>Ponto forte</td><td>Simplicidade</td><td>Escapa de mínimos locais</td><td>Explora várias regiões</td></tr>
+            <tr><td>Custo por ciclo</td><td>Avalia 56 vizinhos</td><td>Avalia 1 vizinho</td><td>Avalia a população</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--muted);font-size:16px;margin-top:16px">A ordem também representa o aumento de conceitos: decisão gulosa, probabilidade e evolução de uma população.</p>
       </div>
     </section>
 
@@ -572,8 +657,8 @@ Escolha uma opcao: <span class="num">4</span></pre>
       <div>
         <div class="eyebrow">Conclusão</div>
         <h1>Busca, avaliação<br>e decisão</h1>
-        <p class="subtitle">A representação por lista simplifica o tabuleiro. A função de conflitos mede cada estado. O Simulated Annealing explora soluções sem abandonar a busca diante de uma piora temporária.</p>
-        <p class="meta">Próxima etapa: validar o Hill Climbing e comparar as execuções no mesmo estado inicial.</p>
+        <p class="subtitle">A mesma representação e a mesma função de conflitos sustentam três estratégias: melhorar um estado, explorar com temperatura ou evoluir uma população.</p>
+        <p class="meta">Do algoritmo mais direto ao mais elaborado, todos procuram chegar a zero conflitos.</p>
       </div>
       <div class="queen-mark" aria-hidden="true">♛</div>
     </section>
